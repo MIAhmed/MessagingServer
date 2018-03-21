@@ -32,7 +32,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="connection.js" />
-    <Compile Include="main.js" />
     <Compile Include="objects.js" />
     <Compile Include="server.js" />
     <Content Include="index.html" />

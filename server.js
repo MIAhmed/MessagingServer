@@ -10,13 +10,13 @@ const obj = require('./objects');
 
 const conn = require('./connection');
 
-var userList = obj.userList;
+//var userList = obj.userList;
 conn.startHttpServer();
 conn.startP2PServer();
 
-conn.userList.push(new obj.User('1001', 'John'));
-conn.userList.push(new obj.User('1002', 'Asad'));
-conn.userList.push(new obj.User('1003', 'Saad'));
+conn.UserList.push(new obj.User('1001', 'John'));
+conn.UserList.push(new obj.User('1002', 'Asad'));
+conn.UserList.push(new obj.User('1003', 'Saad'));
 
 console.log('before debugger');
 debugger;
