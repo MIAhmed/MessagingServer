@@ -1,0 +1,14 @@
+{
+  "name": "i-messaging-server",
+  "version": "0.0.0",
+  "description": "iMessagingServer",
+  "main": "server.js",
+  "author": {
+    "name": "Iqbal Ahmed"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
+    "ws": "^5.1.0"
+  }
+}
