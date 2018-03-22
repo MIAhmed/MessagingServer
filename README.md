@@ -8,8 +8,8 @@ Server listens on websocket port: 6700
 example  ws://ServerIP:6700 
 Data: Server uses JSON for data manipulation  
 
-MessageFormat:
-==============
+Message Format:
+===============
 Server requires formated JSOM message of key/value pair, keys ("type" and "data") are required
 "type" defines message type i.e (login, send, recived etc). for this need to use integer from the "MessageTypes" Enum give below.
 "data" it contains relevent data for the message type inside.
@@ -27,7 +27,6 @@ Steps
 
 2. Need to send login message with message type:1 and with 'user_id' inside the "data" value 
 {"type":1,"data":"{\"user_id\":1001}"}  
-
 upon successfull login, login successfull message will received. with messagetype :2 and description like this
 {"type":2,"data":"Login Success"}
 
@@ -43,11 +42,11 @@ MessageType:5 , "data" contains message (message can be refer from message class
 
 {"type":5,"data":"{\"format\":\"text\",\"from\":\"1001\",\"to\":\"1002\",\"message\":\"Hello, How are you\",\"time\":\"12:00\"}"}
 
-"format" defines the format of message inside the "message", currently "text" only
-"from" defines the sender's id.
-"to" defines the receiver's id/
-"message" defines the actual message that was sent.
-"time" defines the timestamp of the message sent.
+1. "format" defines the format of message inside the "message", currently "text" only.
+2. "from" defines the sender's id
+3. "to" defines the receiver's id
+4. "message" defines the actual message that was sent
+5. "time" defines the timestamp of the message sent
 
 
 For Receiving/Listen Message 
