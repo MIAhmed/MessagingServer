@@ -9,6 +9,7 @@ example  ws://ServerIP:6700
 Data: Server uses JSON for data manipulation  
 
 MessageFormat:
+=============
 Server requires formated JSOM message of key/value pair, keys ("type" and "data") are required
 "type" defines message type i.e (login, send, recived etc). for this need to use integer from the "MessageTypes" Enum give below.
 "data" it contains relevent data for the message type inside.
@@ -62,7 +63,7 @@ fields can be refer from sending message
 
 Users
 =====
-Currently we have added only users from from user_id:1001 to user_id: 1004
+Currently we have added only users from user_id:1001 to user_id: 1004
  
 
 
