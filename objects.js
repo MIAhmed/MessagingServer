@@ -31,12 +31,12 @@ var MessageType = {
     LOGIN_RESPONSE: 2,
     SIGNUP: 3,
     SIGNUP_RESPONSE: 4,
-    SEND: 1,
-    RECIEVED: 2,
-    READ: 3,
-    READ_RESPONSE: 4,
-    BROADCAST: 5
-
+    SEND: 5,
+    RECIEVED: 6,
+    READ: 7,
+    READ_RESPONSE: 8,
+    BROADCAST: 9,
+    ERROR: 10
 };
 
 

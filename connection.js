@@ -4,8 +4,6 @@ var bodyParser = require('body-parser');
 var WebSocket = require("ws");
 const obj = require('./objects');
 
-
-
 this.http_port = process.env.HTTP_PORT || 6900;
 this.p2p_port = process.env.P2P_PORT || 6700;
 //this.initialPeers = process.env.PEERS ? process.env.PEERS.split(',') : []; //"ws://127.0.0.1:6800"
@@ -43,7 +41,6 @@ this.startP2PServer = () => {
 };
 
 var initalizeConnection = (ws) => {
-    //this.onlineUsers.push(ws);
     wsMessageHandler(ws);
     wsErrorHandler(ws);
     this.wsSendMessage(ws, { 'type': MessageType.CONNECTED, 'data': ws._socket.remoteAddress + ':' + ws._socket.remotePort });
@@ -59,100 +56,129 @@ var MessageType = {
     RECIEVED: 6,
     READ: 7,
     READ_RESPONSE: 8,
-    BROADCAST: 9
-    
+    BROADCAST: 9,
+    ERROR: 10
 };
 
 var wsMessageHandler = (ws) => {
+
+   
+
     ws.on('message', (data) => {
-        var msg = JSON.parse(data);
-        console.log("Message Recived: " + data);
-        switch (msg.type) {
-            case MessageType.LOGIN:
-                onLoginHandler(ws, JSON.parse(msg.data));
-                //this.wsSendMessage(ws, { 'type': MessageType.LOGIN_RESPONSE, 'data': 'Login Success' });
-                break;
-            case MessageType.SIGNUP:
-                this.wsSendMessage(ws, { 'type': MessageType.SIGNUP_RESPONSE, 'data': 'Signup Success' });
-                break;
-            case MessageType.SEND:
-                onSendHandler(ws, JSON.parse(msg.data));
-                //this.wsSendMessage(ws, { 'type': MessageType.RECIEVED, 'data': msg.data });
-                break;
-            case MessageType.READ:
-                this.wsSendMessage(ws, { 'type': MessageType.READ_RESPONSE, 'data': 'Specific Message of user' });
-                break;
-            case MessageType.READ_RESPONSE:
-                break;
+        try {
+            var msg = JSON.parse(data);
+            console.log("Message Recived: " + data);
+            switch (msg.type) {
+                case MessageType.LOGIN:
+                    onLoginHandler(ws, JSON.parse(msg.data));
+                    //this.wsSendMessage(ws, { 'type': MessageType.LOGIN_RESPONSE, 'data': 'Login Success' });
+                    break;
+                case MessageType.SIGNUP:
+                    this.wsSendMessage(ws, { 'type': MessageType.SIGNUP_RESPONSE, 'data': 'Signup Success' });
+                    break;
+                case MessageType.SEND:
+                    onSendHandler(ws, JSON.parse(msg.data));
+                    //this.wsSendMessage(ws, { 'type': MessageType.RECIEVED, 'data': msg.data });
+                    break;
+                case MessageType.READ:
+                    this.wsSendMessage(ws, { 'type': MessageType.READ_RESPONSE, 'data': 'Specific Message of user' });
+                    break;
+                case MessageType.READ_RESPONSE:
+                    break;
            
+            }
+        } catch (e) {
+            console.log("error in wsMessageHandler: " + e);
+            this.wsSendMessage(ws, { 'type': MessageType.ERROR, 'data': 'Error in message: ' + e });
         }
 
-    })
+        })
+    
 };
 
 
 
 var onSendHandler = (ws, msg) => {
-    var sendTo = msg.to;
-    var tmpOnlineUserIndx = -1;
-    for (var i = 0; i < this.onlineUsers.length; i++) {
-        if (this.onlineUsers[i].user_id == sendTo) {
-            tmpOnlineUserIndx = i;
-            break;
+
+    try
+    {
+        var sendTo = msg.to;
+        var tmpOnlineUserIndx = -1;
+        for (var i = 0; i < this.onlineUsers.length; i++) {
+            if (this.onlineUsers[i].user_id == sendTo) {
+                tmpOnlineUserIndx = i;
+                break;
+            }
+        }
+        if (tmpOnlineUserIndx == -1) // user is offline
+        {
+            this.MessageQueue.push(msg);
+            console.log(sendTo + ": user is offline, message is queued");
+        }
+        else // user is online
+        {
+            this.wsSendMessage(this.onlineUsers[i].socket, { 'type': MessageType.RECIEVED, 'data': msg });
+            this.AllMessages.push(msg);
+            console.log(sendTo + ": user recieved message from user :" + msg.from);
         }
     }
-    if (tmpOnlineUserIndx == -1) // user is offline
-    {
-        this.MessageQueue.push(msg);
-        console.log(sendTo + ": user is offline, message is queued");
-    }
-    else // user is online
-    {
-        this.wsSendMessage(this.onlineUsers[i].socket, { 'type': MessageType.RECIEVED, 'data': msg });
-        this.AllMessages.push(msg);
-        console.log(sendTo + ": user recieved message from user :" + msg.from);
+        catch (e) {
+        console.log("error in onSendHandler: " + e)
+        throw e;
     }
 
 };
 
 var onLoginHandler = (ws, msg) => {
-    debugger;
-    for (var i = 0; i < this.onlineUsers.length; i++) {
-        if (this.onlineUsers[i].user_id == msg.user_id) {
-            this.onlineUsers.splice(i, 1);
+
+    try {
+
+        for (var i = 0; i < this.onlineUsers.length; i++) {
+            if (this.onlineUsers[i].user_id == msg.user_id) {
+                this.onlineUsers.splice(i, 1);
+            }
         }
-    }
 
-    this.onlineUsers.push(new obj.OnlineUser(msg.user_id, ws));
-    this.wsSendMessage(ws, { 'type': MessageType.LOGIN_RESPONSE, 'data': 'Login Success' });
-    console.log("login success for user: " + msg.user_id + "| connection:" + ws._socket.remoteAddress + ':' + ws._socket.remotePort);
+        this.onlineUsers.push(new obj.OnlineUser(msg.user_id, ws));
+        this.wsSendMessage(ws, { 'type': MessageType.LOGIN_RESPONSE, 'data': 'Login Success' });
+        console.log("login success for user: " + msg.user_id + "| connection:" + ws._socket.remoteAddress + ':' + ws._socket.remotePort);
 
-    console.log("Checking all pending messages for user...");
-    // sending all messages of user when he was offline
-    for (var i = 0; i < this.MessageQueue.length; i++) {
-        if (this.MessageQueue[i].to == msg.user_id) {
-            this.wsSendMessage(ws, { 'type': MessageType.RECIEVED, 'data': this.MessageQueue[i] });
-            this.AllMessages.push(this.MessageQueue[i]);
-            this.MessageQueue.splice(i, 1);
-            console.log("Sending queue message to the user on login");
+        console.log("Checking all pending messages for user...");
+        // sending all messages of user when he was offline
+        for (var i = 0; i < this.MessageQueue.length; i++) {
+            if (this.MessageQueue[i].to == msg.user_id) {
+                this.wsSendMessage(ws, { 'type': MessageType.RECIEVED, 'data': this.MessageQueue[i] });
+                this.AllMessages.push(this.MessageQueue[i]);
+                this.MessageQueue.splice(i, 1);
+                console.log("Sending queue message to the user on login");
+            }
         }
+        console.log("Checking pending messages complete");
     }
-    console.log("Checking pending messages complete");
-
+    catch (e)
+    {
+        console.log("error in onLoginHandler: " + e)
+    }
 };
 
 var onLogoutHandler = (ws, msg) => {
-    for (var i = 0; i < this.onlineUsers.length; i++) {
-        if (this.onlineUsers[i].socket == ws) {
-            this.onlineUsers.splice(i, 1);
+
+    try {
+        for (var i = 0; i < this.onlineUsers.length; i++) {
+            if (this.onlineUsers[i].socket == ws) {
+                this.onlineUsers.splice(i, 1);
+            }
         }
+    }
+    catch (e) {
+        console.log("error in onLogoutHandler: " + e)
     }
 };
 
 
 var wsErrorHandler = (ws) => {
     var closeConnection = (ws) => {
-        console.log('connection closed to peer: ' + ws.url);
+        console.log('connection closed to peer: ' + ws._socket.remoteAddress + ':' + ws._socket.remotePort);
         onLogoutHandler(ws);
         
     };
